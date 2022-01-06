@@ -44,7 +44,7 @@ func ParseNextFrame(r io.Reader) (frame, error) {
 		if _, err := io.CopyN(io.Discard, qr, int64(l)); err != nil {
 			return nil, err
 		}
-		return parseNextFrame(qr)
+		return ParseNextFrame(qr)
 	}
 }
 
