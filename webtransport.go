@@ -157,12 +157,8 @@ func (s *WebTransportServer) handleSession(sess quic.Session) {
 		return
 	}
 	log.Printf("request stream accepted: %d", stream.StreamID())
-
-	// TODO: 读取http3 的头帧
-	// 回复 200
-	r := h3.NewResponseWriter(requestStream)
-	r.Header().Add("sec-webtransport-http3-draft", "draft02")
-	ctx := str.Context()
+	
+	ctx := requestStream.Context()
 	ctx = context.WithValue(ctx, http3.ServerContextKey, s)
 	ctx = context.WithValue(ctx, http.LocalAddrContextKey, sess.LocalAddr())
 	frame, err := h3.ParseNextFrame(requestStream)
@@ -176,6 +172,9 @@ func (s *WebTransportServer) handleSession(sess quic.Session) {
 		return
 	}
 	headerBlock := make([]byte, hf.Length)
+	if _, err := io.ReadFull(requestStream, headerBlock); err != nil {
+		log.Printf("request stream read headerBlock err: %v", err)
+	}
 	decoder := qpack.NewDecoder(nil)
 	hfs, err := decoder.DecodeFull(headerBlock)
 	if err != nil {
@@ -189,10 +188,13 @@ func (s *WebTransportServer) handleSession(sess quic.Session) {
 	}
 	req.RemoteAddr = sess.RemoteAddr().String()
 	req = req.WithContext(ctx)
+	r := h3.NewResponseWriter(requestStream)
+	r.Header().Add("sec-webtransport-http3-draft", "draft02")
 	s.ServeHTTP(r, req)
 	r.WriteHeader(200)
 	r.Flush()
-
+	requestStream.CancelRead(quic.StreamErrorCode(0x100))
+	//requestStream.Close()
 	s.Session <- sess
 }
 
