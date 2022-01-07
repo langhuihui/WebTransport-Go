@@ -102,14 +102,7 @@ func (s *WebTransportServer) Run() error {
 			return err
 		}
 		log.Printf("session accepted: %s", sess.RemoteAddr().String())
-
-		go func() {
-			defer func() {
-				_ = sess.CloseWithError(0, "bye")
-				log.Printf("close session: %s", sess.RemoteAddr().String())
-			}()
-			s.handleSession(sess)
-		}()
+		go s.handleSession(sess)
 	}
 }
 
