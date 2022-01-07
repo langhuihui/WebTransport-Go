@@ -193,7 +193,7 @@ func (s *WebTransportServer) handleSession(sess quic.Session) {
 	s.ServeHTTP(r, req)
 	r.WriteHeader(200)
 	r.Flush()
-	requestStream.CancelRead(quic.StreamErrorCode(0x100))
+	// requestStream.CancelRead(quic.StreamErrorCode(0x100))
 	//requestStream.Close()
 	s.Session <- sess
 }
