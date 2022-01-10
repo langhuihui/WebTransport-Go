@@ -51,7 +51,10 @@ func RequestFromHeaders(headers []qpack.HeaderField) (*http.Request, error) {
 	var err error
 
 	if isConnect {
-		u = &url.URL{Host: authority, Path: path}
+		u, err = url.ParseRequestURI("https://" + authority + path)
+		if err != nil {
+			return nil, err
+		}
 		requestURI = path
 	} else {
 		u, err = url.ParseRequestURI(path)
