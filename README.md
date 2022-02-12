@@ -47,8 +47,10 @@ func main(){
       }()
     }
   }()
-  if err := server.Run(); err != nil {
+  ctx, cancel := context.WithCancel(context.Background())
+  if err := server.Run(ctx); err != nil {
     log.Fatal(err)
+    cancel()
   }
 }
 ```

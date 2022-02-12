@@ -77,7 +77,7 @@ func NewWebTransportServer(config Config) *WebTransportServer {
 }
 
 // Run server.
-func (s *WebTransportServer) Run() error {
+func (s *WebTransportServer) Run(ctx context.Context) error {
 	// server := http3.Server{
 	// 	Server:             &http.Server{Addr: ":8080"},
 	// 	QuicConfig:         &quic.Config{
@@ -96,8 +96,12 @@ func (s *WebTransportServer) Run() error {
 		return err
 	}
 	log.Printf("WebTransport Server listening on: %s", s.ListenAddr)
+	go func() {
+		<-ctx.Done()
+		listener.Close()
+	}()
 	for {
-		sess, err := listener.Accept(context.Background())
+		sess, err := listener.Accept(ctx)
 		if err != nil {
 			return err
 		}
@@ -150,7 +154,7 @@ func (s *WebTransportServer) handleSession(sess quic.Session) {
 		return
 	}
 	log.Printf("request stream accepted: %d", stream.StreamID())
-	
+
 	ctx := requestStream.Context()
 	ctx = context.WithValue(ctx, http3.ServerContextKey, s)
 	ctx = context.WithValue(ctx, http.LocalAddrContextKey, sess.LocalAddr())
